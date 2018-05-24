@@ -141,8 +141,8 @@ def generate_mib(bw, phich_mode, phich_ng, system_fn, number_enodeb_tx_ant ):
     assert len(mibdata_40ms) == 960, "MIB dat sz wrong for 40 msec"
     mibdata_40ms_dict[0] = mibdata_40ms[0:240]
     mibdata_40ms_dict[1] = mibdata_40ms[240:480]
-    mibdata_40ms_dict[1] = mibdata_40ms[480:720]
-    mibdata_40ms_dict[1] = mibdata_40ms[720:960]
+    mibdata_40ms_dict[2] = mibdata_40ms[480:720]
+    mibdata_40ms_dict[3] = mibdata_40ms[720:960]
     pickle.dump(mibdata_40ms_dict, open("mib.p", "wb"))
 
 

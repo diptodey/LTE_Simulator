@@ -10,23 +10,29 @@ defmodule Dl_mib_server do
     GenServer.start_link(__MODULE__,  state)
   end
 
-  def mib_recalc_40ms(pid, time_params, x) do
+  def mib_recalc_40ms(pid, _msg, time_params, x) do
     GenServer.call(pid, {:mib_recalc_40ms, time_params, x})
   end
 
-
-  def mib_add(pid, time_params) do
+  def mib_add(pid, _msg, time_params) do
     GenServer.call(pid, {:mib_add, time_params})
+  end
+
+  def mib_get_state(pid) do
+    GenServer.call(pid, {:mib_get_state})
   end
 
   ## Server Callbacks
   @doc """
   """
   def init(state) do
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
-    :dets.insert(:nw_events, {0, 0, "Tx", :mib_recalc_40ms})
-    :dets.insert(:nw_events, {0, 0, "Tx", :mib_add})
-    :dets.close(:nw_events)
+    #:dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+    #:dets.insert(:nw_events, {0, 0, "Tx", :mib_recalc_40ms})
+    Common_utils.add_event_db(0, 0, "NonRF", :mib_recalc_40ms, %{} )
+    #:dets.insert(:nw_events, {0, 0, "Tx", :mib_add})
+    Common_utils.add_event_db(0, 0, "Tx", :mib_add, %{} )
+
+    #:dets.close(:nw_events)
     {:ok, state}
   end
 
@@ -67,14 +73,18 @@ defmodule Dl_mib_server do
     Python.call(pid, "tdd_pbcch", "add_mib",  [system_frame_no, sfn, bw, 10 ])
     Python.call(pid, "tdd_pbcch", "add_mib",  [system_frame_no, sfn, bw, 11 ])
     Python.stop(pid)
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+
     if rem(system_frame_no, 3) == 0 and system_frame_no != 0 do
-      :dets.insert(:nw_events, {system_frame_no + 1, 0, "Tx", :mib_recalc_40ms})
+      Common_utils.add_event_db(system_frame_no + 1, 0, "NonRF", :mib_recalc_40ms, %{} )
     end
-    :dets.insert(:nw_events, {system_frame_no + 1, 0, "Tx", :mib_add})
-    :dets.close(:nw_events)
+    Common_utils.add_event_db(system_frame_no + 1, 0, "Tx", :mib_add, %{} )
+
     {:reply, state, state}
 
+  end
+
+  def handle_call({:mib_get_state}, _from, state) do
+    {:reply, state, state}
   end
 
   ## Helper Functions

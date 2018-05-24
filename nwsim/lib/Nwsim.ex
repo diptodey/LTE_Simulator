@@ -12,13 +12,9 @@ defmodule Nwsim do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  def add_event(pid, event) do
-    GenServer.call(pid, {:add_event, event})
-  end
-
   def show_dbase() do
     :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
-    ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4"})
+    ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5"})
     IO.inspect(ret)
   end
 
@@ -26,8 +22,13 @@ defmodule Nwsim do
     # extract all tx events matching the frame and sfn number
     %{system_frame_no: system_frame_no, sfn: sfn } = time_params
     :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
-    ret = :dets.match(:nw_events, {system_frame_no, sfn, "Tx", :"$4"})
-    ret |> Enum.map( fn(x) -> GenServer.call(pid, {List.last(x), time_params })  end)
+    ret = :dets.match(:nw_events, {system_frame_no, sfn, "Tx", :"$4", :"$5"})
+    ret |> Enum.map( fn(x) -> GenServer.call(pid, {Enum.at(x, 0), Enum.at(x, 1), time_params })  end)
+  end
+
+
+  def mib_get_state(pid) do
+    GenServer.call(pid, {:mib_get_state})
   end
   ## Server Callbacks
 
@@ -46,6 +47,7 @@ defmodule Nwsim do
                [  Agent_nw_params.get_param(nw_params, :total_no_carriers) * 12])
     Python.stop(python_pid)
 
+    ### Start the MIB Server
     x = %{}
     x = x |> Map.put(:bw,                   Agent_nw_params.get_param(nw_params,  :bw))
     x = x |> Map.put(:phich_mode,           Agent_nw_params.get_param(nw_params, :phich_mode))
@@ -53,32 +55,43 @@ defmodule Nwsim do
     x = x |> Map.put(:number_enodeb_tx_ant, Agent_nw_params.get_param(nw_params, :number_enodeb_tx_ant))
     {:ok, dl_mib_pid} = Dl_mib_server.start_link(x)
 
+    ### Start the Sync Server
     x = %{}
     x = x |> Map.put(:bw,                   Agent_nw_params.get_param(nw_params, :bw))
     x = x |> Map.put(:cell_number,          Agent_nw_params.get_param(nw_params, :cell_number))
     x = x |> Map.put(:cell_group_number,    Agent_nw_params.get_param(nw_params, :cell_group_number))
     {:ok, dl_sync_pid} = Dl_sync_server.start_link(x)
 
-    {:ok, %{nw_params: nw_params, dl_mib_pid: dl_mib_pid, dl_sync_pid: dl_sync_pid}}
+    ### Start the PCFICH Server
+    x = %{}
+    x = x |> Map.put(:cfi, Agent_nw_params.get_param(nw_params, :cfi))
+    x = x |> Map.put(:config, Agent_nw_params.get_param(nw_params, :config))
+    x = x |> Map.put(:cell_number,          Agent_nw_params.get_param(nw_params, :cell_number))
+    x = x |> Map.put(:cell_group_number,    Agent_nw_params.get_param(nw_params, :cell_group_number))
+    {:ok, dl_pcfich_pid} = Dl_pcfich_server.start_link(x)
+
+    {:ok, %{nw_params: nw_params,
+            dl_mib_pid: dl_mib_pid,
+            dl_sync_pid: dl_sync_pid,
+            dl_pcfich_pid: dl_pcfich_pid,
+            }
+    }
   end
 
-  def handle_call({:add_event, _event}, _from, state) do
-    {:ok, state, state}
-  end
 
   @doc """
     Add Tx Events for MIB, each frame first subframe
   """
-  def handle_call({:mib_add, time_params}, _from, state ) do
+  def handle_call({:mib_add, msg, time_params}, _from, state ) do
     dl_mib_pid = state |> Map.get(:dl_mib_pid)
-    Dl_mib_server.mib_add(dl_mib_pid, time_params)
+    Dl_mib_server.mib_add(dl_mib_pid, msg, time_params)
     {:reply, state, state}
   end
 
   @doc """
     Add Tx Events for MIB recalc, every 40 msecs
   """
-  def handle_call({:mib_recalc_40ms, time_params}, _from, state ) do
+  def handle_call({:mib_recalc_40ms, _msg, time_params}, _from, state ) do
     x = %{}
     nw_params = state |> Map.get(:nw_params)
     x = x |> Map.put(:bw,                   Agent_nw_params.get_param(nw_params, :bw))
@@ -87,21 +100,33 @@ defmodule Nwsim do
     x = x |> Map.put(:phich_ng,             Agent_nw_params.get_param(nw_params, :phich_ng))
     x = x |> Map.put(:number_enodeb_tx_ant, Agent_nw_params.get_param(nw_params, :number_enodeb_tx_ant))
     dl_mib_pid = state |> Map.get(:dl_mib_pid)
-    Dl_mib_server.mib_recalc_40ms(dl_mib_pid, time_params, x)
+    Dl_mib_server.mib_recalc_40ms(dl_mib_pid, %{}, time_params, x)
     {:reply, state, state}
   end
 
 
-  def handle_call({:sync_sss_add, time_params}, _from, state ) do
+  def handle_call({:sync_sss_add, msg, time_params}, _from, state ) do
     dl_sync_pid = state |> Map.get(:dl_sync_pid)
-    Dl_sync_server.sync_sss_add(dl_sync_pid, time_params)
+    Dl_sync_server.sync_sss_add(dl_sync_pid, msg, time_params)
     {:reply, state, state}
   end
 
 
-  def handle_call({:sync_pss_add, time_params}, _from, state ) do
+  def handle_call({:sync_pss_add, msg, time_params}, _from, state ) do
     dl_sync_pid = state |> Map.get(:dl_sync_pid)
-    Dl_sync_server.sync_pss_add(dl_sync_pid, time_params)
+    Dl_sync_server.sync_pss_add(dl_sync_pid, msg, time_params)
+    {:reply, state, state}
+  end
+
+  def handle_call({:mib_get_state}, _from, state) do
+    dl_mib_pid = state |> Map.get(:dl_mib_pid)
+    k = Dl_mib_server.mib_get_state(dl_mib_pid)
+    {:reply, k, state}
+  end
+
+  def handle_call({:pcfich_add, msg, time_params}, _from, state) do
+    dl_pcfich_pid = state |> Map.get(:dl_pcfich_pid)
+    Dl_pcfich_server.pcfich_add(dl_pcfich_pid, msg, time_params)
     {:reply, state, state}
   end
   ## Server API

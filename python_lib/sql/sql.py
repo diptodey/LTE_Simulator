@@ -22,7 +22,7 @@ def convert_array(text):
 
 
 def conn_cursor():
-    path = os.getcwd() + r'\..\python_lib\sql\subframe_rb.db'
+    path = os.getcwd() + r'\\..\\python_lib\\sql\\subframe_rb.db'
     conn = sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
     cursor = conn.cursor()
     return conn, cursor
@@ -82,3 +82,7 @@ def get_data(ofdm_symbol):
     cursor.execute('''SELECT arr from RB WHERE SYMBOL=?''',(ofdm_symbol,))
     data = cursor.fetchone()[0]
     return data
+
+
+
+init_db(12)

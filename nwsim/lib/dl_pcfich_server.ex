@@ -12,7 +12,7 @@ defmodule Dl_pcfich_server do
   end
 
   def pcfich_add(pid, _msg, time_params) do
-    GenServer.call(pid, {:pcfich_add, time_params})
+    GenServer.call(pid, {:pcfich, time_params})
   end
 
   def pcfich_get_state(pid) do
@@ -24,12 +24,12 @@ defmodule Dl_pcfich_server do
   """
   def init(state) do
     #%{cfi: _, config: config} = state
-    Common_utils.add_event_db(0, 0, "Tx", :pcfich_add, %{} )
+    Common_utils.add_event_db(0, 0, "Nw_Tx", 0, :pcfich, %{} )
     {:ok, state}
   end
 
 
-  def handle_call({:pcfich_add, time_params}, _from, state) do
+  def handle_call({:pcfich, time_params}, _from, state) do
     find_next_DL(time_params, state[:config])
     {:reply, state, state}
   end
@@ -121,9 +121,7 @@ defmodule Dl_pcfich_server do
   end
 
   defp schedule_next(system_frame_no, sfn) do
-    Common_utils.add_event_db(system_frame_no, sfn, "Tx", :pcfich_add, %{} )
+    Common_utils.add_event_db(system_frame_no, sfn, "Nw_Tx", 0, :pcfich, %{} )
   end
-
-
 
 end

@@ -5,8 +5,6 @@ defmodule NwsimTest do
   test "Test MIB" do
     {:ok, pid} = Nwsim.start_link()
 
-    Nwsim.show_dbase()
-    
     sfn_list = [0,1,2,3,4,5,6,7,8,9]
     frame_list = [0,1,2,3,4]
 

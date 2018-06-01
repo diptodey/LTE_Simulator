@@ -13,7 +13,7 @@ defmodule Common_utils do
 
 
   def add_event_db(system_frame_no, sfn, type, ue_id, event_tag, params ) do
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     :dets.insert(:nw_events, {system_frame_no, sfn, type, ue_id, event_tag, params})
     :dets.close(:nw_events)
   end

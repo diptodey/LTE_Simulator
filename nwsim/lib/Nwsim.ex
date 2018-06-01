@@ -13,7 +13,7 @@ defmodule Nwsim do
   end
 
   def show_dbase() do
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
     IO.inspect(ret)
   end
@@ -21,7 +21,7 @@ defmodule Nwsim do
   def run_tx_events(pid, time_params) do
     # extract all tx events matching the frame and sfn number
     %{system_frame_no: system_frame_no, sfn: sfn } = time_params
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     ret = :dets.match(:nw_events, {system_frame_no, sfn, :"$3", :"$4", :"$5", :"$6"})
     ret |> Enum.map( fn(x) -> GenServer.call(pid, {Enum.at(x, 2), Enum.at(x, 3), time_params })  end)
   end
@@ -37,8 +37,8 @@ defmodule Nwsim do
   """
   def init(:ok) do
     # Remove old database and create new database
-    Common_utils.delete_file_if_exists?("nw_events.txt")
-    :dets.open_file(:nw_events, [{:file, 'nw_events.txt'}, {:type, :duplicate_bag}])
+    Common_utils.delete_file_if_exists?("./../nw_events.txt")
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     :dets.close(:nw_events)
     {:ok, nw_params} = Agent_nw_params.start_link()
 

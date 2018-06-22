@@ -25,8 +25,8 @@ defmodule Dl_sync_server do
 
   """
   def init(state) do
-    Common_utils.add_event_db(0, 1, "Nw_Tx", 0, :sync_pss, Map.take(state,[:cell_number])   )
-    Common_utils.add_event_db(0, 0, "Nw_Tx", 0, :sync_sss, Map.take(state,[:cell_number, :cell_group_number])   )
+    Common_utils.add_event_db(0, 1, :Nw_Tx, 0, :sync_pss, Map.take(state,[:cell_number])   )
+    Common_utils.add_event_db(0, 0, :Nw_Tx, 0, :sync_sss, Map.take(state,[:cell_number, :cell_group_number])   )
     {:ok, state}
   end
 
@@ -42,8 +42,8 @@ defmodule Dl_sync_server do
     #Python.call(pid, "tdd_sync", "add_pss", [sfn, bw, 2, cell_number])
     #Python.stop(pid)
     case sfn do
-      1 -> Common_utils.add_event_db(system_frame_no, 6, "Nw_Tx", 0, :sync_pss, Map.take(state,[:cell_number]) )
-      6 -> Common_utils.add_event_db(system_frame_no + 1, 1, "Nw_Tx", 0, :sync_pss, Map.take(state,[:cell_number]) )
+      1 -> Common_utils.add_event_db(system_frame_no, 6, :Nw_Tx, 0, :sync_pss, Map.take(state,[:cell_number]) )
+      6 -> Common_utils.add_event_db(system_frame_no + 1, 1, :Nw_Tx, 0, :sync_pss, Map.take(state,[:cell_number]) )
     end
     {:reply, state, state}
   end
@@ -63,13 +63,13 @@ defmodule Dl_sync_server do
     case sfn do
       0 -> Common_utils.add_event_db(system_frame_no,
                                     5,
-                                    "Nw_Tx",
+                                    :Nw_Tx,
                                     0,
                                     :sync_sss,
                                     Map.take(state,[:cell_number, :cell_group_number]) )
       5 -> Common_utils.add_event_db(system_frame_no + 1,
                                      0,
-                                     "Nw_Tx",
+                                     :Nw_Tx,
                                      0,
                                      :sync_sss,
                                      Map.take(state,[:cell_number, :cell_group_number]) )

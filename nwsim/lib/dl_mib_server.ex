@@ -26,8 +26,8 @@ defmodule Dl_mib_server do
   @doc """
   """
   def init(state) do
-    Common_utils.add_event_db(0, 0, "Nw_NonRF", 0, :mib_recalc_40ms, %{} )
-    Common_utils.add_event_db(0, 0, "Nw_Tx", 0, :mib, state )
+    Common_utils.add_event_db(0, 0, :Nw_NonRF, 0, :mib_recalc_40ms, %{} )
+    Common_utils.add_event_db(0, 0, :Nw_Tx, 0, :mib, state )
     {:ok, state}
   end
 
@@ -66,9 +66,9 @@ defmodule Dl_mib_server do
     #Python.stop(pid)
 
     if rem(system_frame_no, 3) == 0 and system_frame_no != 0 do
-      Common_utils.add_event_db(system_frame_no + 1, 0, "Nw_NonRF", 0, :mib_recalc_40ms, %{} )
+      Common_utils.add_event_db(system_frame_no + 1, 0, :Nw_NonRF, 0, :mib_recalc_40ms, %{} )
     end
-    Common_utils.add_event_db(system_frame_no + 1, 0, "Nw_Tx", 0, :mib, state )
+    Common_utils.add_event_db(system_frame_no + 1, 0, :Nw_Tx, 0, :mib, state )
 
     {:reply, state, state}
 

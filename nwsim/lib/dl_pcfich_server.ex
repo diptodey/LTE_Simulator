@@ -24,7 +24,7 @@ defmodule Dl_pcfich_server do
   """
   def init(state) do
     #%{cfi: _, config: config} = state
-    Common_utils.add_event_db(0, 0, "Nw_Tx", 0, :pcfich, %{} )
+    Common_utils.add_event_db(0, 0, :Nw_Tx, 0, :pcfich, %{} )
     {:ok, state}
   end
 
@@ -121,7 +121,7 @@ defmodule Dl_pcfich_server do
   end
 
   defp schedule_next(system_frame_no, sfn) do
-    Common_utils.add_event_db(system_frame_no, sfn, "Nw_Tx", 0, :pcfich, %{} )
+    Common_utils.add_event_db(system_frame_no, sfn, :Nw_Tx, 0, :pcfich, %{} )
   end
 
 end

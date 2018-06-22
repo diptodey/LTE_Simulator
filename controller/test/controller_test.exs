@@ -21,7 +21,7 @@ defmodule ControllerTest do
         Controller.run_next_tti(pid)
       end
     end
-    #Nwsim.show_dbase()
+    Controller.log(pid)
   end
 
 end

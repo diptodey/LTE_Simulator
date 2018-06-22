@@ -43,17 +43,17 @@ defmodule Controller do
     {:ok, %{logger_pid: pid_logger,
             nw_pid: pid_nw,
             tti_pid: pid_tti,
-            user_pid: {pid_user_1, pid_user_2, pid_user_3, pid_user_4}}}
+            user_pid: [pid_user_1, pid_user_2, pid_user_3, pid_user_4]}}
   end
 
   def handle_call({:run_next_tti}, _from, state ) do
     time_params = Agent_tti.get_curr_tti(state[:tti_pid])
     run_nw_tx(state[:nw_pid],  time_params)
-    run_user_broadcast_rx(time_params)
-    #run_user_tx(state[:nw_pid], time_params)
+    state[:user_pid] |> Enum.map(fn(x) -> run_user_broadcast_rx(time_params, x) end)
+
 
     #Log the tti results
-    Agent_tti.incr_tti(state[:tti_pid])
+    #Agent_tti.incr_tti(state[:tti_pid])
     {:reply, state, state}
   end
 
@@ -72,10 +72,11 @@ defmodule Controller do
     Nwsim.run_tx_events(nwpid, time_params )
   end
 
-  defp run_user_broadcast_rx(time_params) do
+  defp run_user_broadcast_rx(time_params, pid_user) do
     %{system_frame_no: system_frame_no, sfn: sfn } = time_params
     :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
-    ret = :dets.match(:nw_events, {system_frame_no, sfn, :"$3", 0, :"$5", :"$6"})
+    ret = :dets.match(:nw_events, {system_frame_no, sfn, :Nw_Tx, 0, :"$5", :"$6"})
+    ret |> Enum.map( fn(x) -> Users.run_rx_events(pid_user,  x, time_params)  end)
   end
 
 

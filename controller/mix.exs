@@ -24,6 +24,7 @@ defmodule Controller.MixProject do
   defp deps do
     [
       {:nwsim, path: "../nwsim" },
+      {:users, path: "../users" },
     ]
   end
 end

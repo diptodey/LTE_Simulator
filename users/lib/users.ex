@@ -5,33 +5,30 @@ defmodule Users do
 
   use GenServer
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, :ok, [])
+  ## Client API
+
+  @doc """
+
+  """
+  def start_link(user_id) do
+    GenServer.start_link(__MODULE__, [user_id])
   end
 
-  def get_state(pid) do
-    GenServer.call(pid, {:get_state})
+
+  def run_rx_events(pid, rx_params, time_params) do
+      rx_params |> Enum.map( fn(rx_params) -> GenServer.call(pid, {Enum.at(rx_params, 0), Enum.at(rx_params, 1), time_params })  end)
   end
 
-  def send_pucch(_pid, _from) do
-
-  end
-
-  def recv_pdch(_pid, _from) do
-
-  end
-
-  def send_pusch(_pid, _from) do
-
-  end
-
-  def init(:ok) do
+## Server Callbacks
+  def init(user_id) do
     {:ok,
-    %{
-      last_update_tti: 0
-      }
+    user_id
     }
   end
+
+def handle_call({:mib, _msg, _time_params}, _from, state ) do
+    {:reply, state, state}
+end
 
 
   ## Server API

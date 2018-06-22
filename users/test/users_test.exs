@@ -26,10 +26,10 @@ defmodule UsersTest do
   end
 
 
-  test "Tbs_calc" do
-    assert 10 == Tbs_calc.get_itbs(10)
-    assert 10 == Tbs_calc.get_itbs(11)
-    assert 256 = Tbs_calc.get_tbs(0, 20)
+  test "agent user params" do
+    {:ok, pid} = Agent_user_params.start_link()
+    pid |> Agent_user_params.update_param(:config, 1)
+    assert 1 ==  pid |> Agent_user_params.get_param(:config)
   end
 
 end

@@ -26,11 +26,25 @@ defmodule Users do
     }
   end
 
-def handle_call({:mib, _msg, _time_params}, _from, state ) do
+
+  def handle_call({:mib, _msg, _time_params}, _from, state ) do
+      {:reply, state, state}
+  end
+
+
+  def handle_call({:sync_pss, _msg, _time_params}, _from, state ) do
     {:reply, state, state}
-end
+  end
 
 
+  def handle_call({:sync_sss, _msg, _time_params}, _from, state ) do
+    {:reply, state, state}
+  end
+
+
+  def handle_call({:pcfich, _msg, _time_params}, _from, state) do
+    {:reply, state, state}
+  end
   ## Server API
 
 

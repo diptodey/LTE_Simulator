@@ -15,6 +15,10 @@ defmodule Controller do
       GenServer.call(pid, {:run_next_tti})
   end
 
+  def log(pid) do
+    GenServer.call(pid, {:log})
+  end
+
 
   ## Server Callbacks
 
@@ -22,6 +26,7 @@ defmodule Controller do
 
   """
   def init(:ok) do
+    {:ok, pid_logger} = Logutils.start_link()
     {:ok, pid_tti} = Agent_tti.start_link()
     {:ok, pid_nw} = Nwsim.start_link()
 
@@ -35,7 +40,8 @@ defmodule Controller do
     {:ok, pid_user_2} = Users.start_link(2)
     {:ok, pid_user_3} = Users.start_link(3)
     {:ok, pid_user_4} = Users.start_link(4)
-    {:ok, %{nw_pid: pid_nw,
+    {:ok, %{logger_pid: pid_logger,
+            nw_pid: pid_nw,
             tti_pid: pid_tti,
             user_pid: {pid_user_1, pid_user_2, pid_user_3, pid_user_4}}}
   end
@@ -45,7 +51,18 @@ defmodule Controller do
     run_nw_tx(state[:nw_pid],  time_params)
     run_user_broadcast_rx(time_params)
     #run_user_tx(state[:nw_pid], time_params)
+
+    #Log the tti results
     Agent_tti.incr_tti(state[:tti_pid])
+    {:reply, state, state}
+  end
+
+
+  def handle_call({:log}, _from, state) do
+    #Log the tti results
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
+    ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
+    ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
     {:reply, state, state}
   end
 

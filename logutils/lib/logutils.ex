@@ -10,8 +10,8 @@ defmodule Logutils do
   @doc """
 
   """
-  def start_link() do
-    GenServer.start_link(__MODULE__, :ok, [])
+  def start_link(filename) do
+    GenServer.start_link(__MODULE__, filename)
   end
 
   def write_line(pid, line) do
@@ -23,9 +23,9 @@ defmodule Logutils do
   @doc """
 
   """
-  def init(:ok) do
+  def init(filename) do
     #Common_utils.delete_file_if_exists?("./log.txt")
-    file = File.open!("log_file.txt", [:utf8, :write])
+    file = File.open!(filename, [:utf8, :write])
     IO.inspect(file)
     {:ok, %{file: file}}
   end

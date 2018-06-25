@@ -26,7 +26,7 @@ defmodule Controller do
 
   """
   def init(:ok) do
-    {:ok, pid_logger} = Logutils.start_link()
+    {:ok, pid_logger} = Logutils.start_link("nw_log_file.txt")
     {:ok, pid_tti} = Agent_tti.start_link()
     {:ok, pid_nw} = Nwsim.start_link()
 
@@ -36,10 +36,10 @@ defmodule Controller do
     # read from a txt file and parse to create users, ue_ids used as identifiers
     # current implementation we will assume 4 users with userid 1 to 4
     # Donot use userid 0, this is meant to be broadcast #
-    {:ok, pid_user_1} = Users.start_link(1)
-    {:ok, pid_user_2} = Users.start_link(2)
-    {:ok, pid_user_3} = Users.start_link(3)
-    {:ok, pid_user_4} = Users.start_link(4)
+    {:ok, pid_user_1} = Users.start_link(1, :user_events_1)
+    {:ok, pid_user_2} = Users.start_link(2, :user_events_2)
+    {:ok, pid_user_3} = Users.start_link(3, :user_events_3)
+    {:ok, pid_user_4} = Users.start_link(4, :user_events_4)
     {:ok, %{logger_pid: pid_logger,
             nw_pid: pid_nw,
             tti_pid: pid_tti,
@@ -63,6 +63,9 @@ defmodule Controller do
     :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
     ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
+
+    state[:user_pid] |> Enum.map(fn(x) -> Users.log(x) end)
+
     {:reply, state, state}
   end
 

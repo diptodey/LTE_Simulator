@@ -60,6 +60,7 @@ defmodule Controller do
     state[:user_pid] |> Enum.map(fn(x) -> x |> Users.gen_rx_events(time_params) end)
 
     # Search Nw Tx database to find RX user Events
+    ret = Nwsim.get_tx_events(state[:nw_pid], time_params)
 
     # Search User Tx datatbase to find RX Nw Events
     {:reply, state, state}

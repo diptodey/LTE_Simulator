@@ -77,6 +77,7 @@ defmodule Users do
     {:reply, state, state}
   end
 
+
   def handle_call({:log}, _from, state) do
     filename = './../userid_#{state[:user_id]}_events.txt'
     :dets.open_file(state[:tablename], [{:file, filename}, {:type, :duplicate_bag}])

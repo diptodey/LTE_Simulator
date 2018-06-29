@@ -26,15 +26,19 @@ defmodule Nwsim do
     ret |> Enum.map( fn(x) -> GenServer.call(pid, {Enum.at(x, 2), Enum.at(x, 3), time_params })  end)
   end
 
-
-  def mib_get_state(pid) do
-    GenServer.call(pid, {:mib_get_state})
+  def get_tx_events(pid, time_params) do
+    %{system_frame_no: system_frame_no, sfn: sfn } = time_params
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
+    ret = :dets.match(:nw_events, {system_frame_no, sfn, :"$3", :"$4", :"$5", :"$6"})
   end
 
   def log(pid) do
     GenServer.call(pid, {:log})
   end
 
+  def mib_get_state(pid) do
+    GenServer.call(pid, {:mib_get_state})
+  end
   ## Server Callbacks
 
   @doc """
@@ -138,13 +142,13 @@ defmodule Nwsim do
     {:reply, state, state}
   end
 
-
   def handle_call({:log}, _from, state) do
     :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
     ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
     {:reply, state, state}
   end
+
   ## Server API
 
 

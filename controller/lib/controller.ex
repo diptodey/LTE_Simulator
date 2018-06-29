@@ -48,24 +48,22 @@ defmodule Controller do
 
   def handle_call({:run_next_tti}, _from, state ) do
     time_params = Agent_tti.get_curr_tti(state[:tti_pid])
+    # Run all Network Tx event for this tti
     run_nw_tx(state[:nw_pid],  time_params)
-    state[:user_pid] |> Enum.map(fn(x) -> run_user_broadcast_rx(time_params, x) end)
+    #Run all User Rx Broadcast events for this tti
+    state[:user_pid] |> Enum.map(fn(x) -> x |> Users.gen_rx_events(time_params) end)
 
-
-    #Log the tti results
-    #Agent_tti.incr_tti(state[:tti_pid])
     {:reply, state, state}
   end
 
 
   def handle_call({:log}, _from, state) do
-    #Log the tti results
+    #Generate network logs
     :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
     ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
-
+    #Generate User Logs
     state[:user_pid] |> Enum.map(fn(x) -> Users.log(x) end)
-
     {:reply, state, state}
   end
 

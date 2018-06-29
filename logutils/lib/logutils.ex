@@ -26,12 +26,10 @@ defmodule Logutils do
   def init(filename) do
     #Common_utils.delete_file_if_exists?("./log.txt")
     file = File.open!(filename, [:utf8, :write])
-    IO.inspect(file)
     {:ok, %{file: file}}
   end
 
   def handle_call(line, _from, state) do
-    IO.inspect(line)
     IO.puts(state[:file], line)
     {:reply, state, state}
   end

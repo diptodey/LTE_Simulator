@@ -18,6 +18,10 @@ defmodule Users do
     GenServer.call(pid, {:gen_rx_events , time_params} )
   end
 
+  def run_tx_events(pid, time_params) do
+    GenServer.call(pid, {:gen_tx_events , time_params} )
+  end
+
   def log(pid) do
     GenServer.call(pid, {:log})
   end
@@ -50,6 +54,11 @@ defmodule Users do
   def handle_call({:gen_rx_events, time_params}, _from, state) do
     Ue_Dl_sync_server.generate_rx_events(state[:dl_sync_pid], time_params)
     {:reply, state, state}
+  end
+
+
+  def handle_call({:gen_tx_events, time_params}, _from, state) do
+      {:reply, state, state}
   end
 
 

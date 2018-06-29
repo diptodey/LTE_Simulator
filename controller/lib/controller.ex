@@ -30,8 +30,6 @@ defmodule Controller do
     {:ok, pid_tti} = Agent_tti.start_link()
     {:ok, pid_nw} = Nwsim.start_link()
 
-
-
     # As part of controller init we need to initialize users.
     # read from a txt file and parse to create users, ue_ids used as identifiers
     # current implementation we will assume 4 users with userid 1 to 4
@@ -48,11 +46,22 @@ defmodule Controller do
 
   def handle_call({:run_next_tti}, _from, state ) do
     time_params = Agent_tti.get_curr_tti(state[:tti_pid])
-    # Run all Network Tx event for this tti
-    run_nw_tx(state[:nw_pid],  time_params)
-    #Generate Rx events
+    # Heart of the controller:
+    # First run all tx events both in network and Users
+    # Second run all rx events
+
+    # Run all User Tx events
+    state[:user_pid] |> Enum.map(fn(x) -> x |> Users.run_tx_events(time_params) end)
+
+    # Run all Nw Tx events
+    Nwsim.run_tx_events(state[:nw_pid], time_params )
+
+    #Generate Possible User Rx events
     state[:user_pid] |> Enum.map(fn(x) -> x |> Users.gen_rx_events(time_params) end)
 
+    # Search Nw Tx database to find RX user Events
+
+    # Search User Tx datatbase to find RX Nw Events
     {:reply, state, state}
   end
 

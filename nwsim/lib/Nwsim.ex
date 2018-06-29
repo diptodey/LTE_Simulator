@@ -30,6 +30,11 @@ defmodule Nwsim do
   def mib_get_state(pid) do
     GenServer.call(pid, {:mib_get_state})
   end
+
+  def log(pid) do
+    GenServer.call(pid, {:log})
+  end
+
   ## Server Callbacks
 
   @doc """
@@ -37,7 +42,8 @@ defmodule Nwsim do
   """
   def init(:ok) do
     # Remove old database and create new database
-    Common_utils.delete_file_if_exists?("./../nw_events.txt")
+    {:ok, pid_logger} = Logutils.start_link('./../nw_log_file.txt')
+    Nwsim_utils.delete_file_if_exists?('./../nw_events.txt')
     :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
     :dets.close(:nw_events)
     {:ok, nw_params} = Agent_nw_params.start_link()
@@ -70,7 +76,9 @@ defmodule Nwsim do
     x = x |> Map.put(:cell_group_number,  Agent_nw_params.get_param(nw_params, :cell_group_number))
     {:ok, dl_pcfich_pid} = Dl_pcfich_server.start_link(x)
 
-    {:ok, %{nw_params: nw_params,
+    {:ok, %{
+            logger_pid: pid_logger,
+            nw_params: nw_params,
             dl_mib_pid: dl_mib_pid,
             dl_sync_pid: dl_sync_pid,
             dl_pcfich_pid: dl_pcfich_pid,
@@ -127,6 +135,14 @@ defmodule Nwsim do
   def handle_call({:pcfich, msg, time_params}, _from, state) do
     dl_pcfich_pid = state |> Map.get(:dl_pcfich_pid)
     Dl_pcfich_server.pcfich_add(dl_pcfich_pid, msg, time_params)
+    {:reply, state, state}
+  end
+
+
+  def handle_call({:log}, _from, state) do
+    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
+    ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
+    ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
     {:reply, state, state}
   end
   ## Server API

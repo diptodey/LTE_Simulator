@@ -26,7 +26,7 @@ defmodule Controller do
 
   """
   def init(:ok) do
-    {:ok, pid_logger} = Logutils.start_link("nw_log_file.txt")
+    {:ok, pid_logger} = Logutils.start_link('./../controller_log_file.txt')
     {:ok, pid_tti} = Agent_tti.start_link()
     {:ok, pid_nw} = Nwsim.start_link()
 
@@ -50,7 +50,7 @@ defmodule Controller do
     time_params = Agent_tti.get_curr_tti(state[:tti_pid])
     # Run all Network Tx event for this tti
     run_nw_tx(state[:nw_pid],  time_params)
-    #Run all User Rx Broadcast events for this tti
+    #Generate Rx events
     state[:user_pid] |> Enum.map(fn(x) -> x |> Users.gen_rx_events(time_params) end)
 
     {:reply, state, state}
@@ -59,9 +59,7 @@ defmodule Controller do
 
   def handle_call({:log}, _from, state) do
     #Generate network logs
-    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
-    ret = :dets.match(:nw_events, {:"$1", :"$2", :"$3", :"$4", :"$5", :"$6"})
-    ret |> Enum.map( fn(x) -> state[:logger_pid] |> Logutils.write_line( inspect(x)) end )
+    Nwsim.log(state[:nw_pid])
     #Generate User Logs
     state[:user_pid] |> Enum.map(fn(x) -> Users.log(x) end)
     {:reply, state, state}
@@ -72,13 +70,5 @@ defmodule Controller do
   defp run_nw_tx(nwpid, time_params) do
     Nwsim.run_tx_events(nwpid, time_params )
   end
-
-  defp run_user_broadcast_rx(time_params, pid_user) do
-    %{system_frame_no: system_frame_no, sfn: sfn } = time_params
-    :dets.open_file(:nw_events, [{:file, './../nw_events.txt'}, {:type, :duplicate_bag}])
-    ret = :dets.match(:nw_events, {system_frame_no, sfn, :Nw_Tx, 0, :"$5", :"$6"})
-    ret |> Enum.map( fn(x) -> Users.run_rx_events(pid_user,  x, time_params)  end)
-  end
-
 
 end

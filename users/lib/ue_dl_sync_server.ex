@@ -20,12 +20,12 @@ defmodule Ue_Dl_sync_server do
 
   ## Server Callbacks
 
-  def init([user_id, pid_logger, agent_userparams]) do
+  def init([user_id, tablename, agent_userparams]) do
 
     {:ok,
       %{
         user_id: user_id,
-        pid_logger: pid_logger,
+        tablename: tablename,
         agent_userparams: agent_userparams,
         # State machine for Dl_sync_server
         # :init -> no sync signal acquired

@@ -28,7 +28,7 @@ defmodule Users do
     {:ok, user_agent_pid} = Agent_user_params.start_link()
 
     filename = './../userid_#{user_id}_events.txt'
-    Common_utils.delete_file_if_exists?(filename)
+    User_utils.delete_file_if_exists?(filename)
     :dets.open_file(tablename, [{:file, filename}, {:type, :duplicate_bag}])
     :dets.close(tablename)
 

@@ -18,6 +18,15 @@ defmodule Ue_Dl_sync_server do
     GenServer.call(pid, {:gen_rx_events, time_params})
   end
 
+  def sync_pss_add(pid, _msg, time_params) do
+      GenServer.call(pid, {:sync_pss, time_params})
+  end
+
+  def sync_sss_add(pid, _msg, time_params) do
+    GenServer.call(pid, {:sync_sss, time_params})
+  end
+  
+
   ## Server Callbacks
 
   def init([user_id, tablename, agent_userparams]) do

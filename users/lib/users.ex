@@ -72,6 +72,15 @@ defmodule Users do
     {:reply, state, state}
   end
 
+  def handle_call({:sync_pss, msg, time_params}, _from, state ) do
+    Ue_Dl_sync_server.sync_pss_add(state[:dl_sync_pid], msg, time_params)
+    {:reply, state, state}
+  end
+
+  def handle_call({:sync_sss, msg, time_params}, _from, state ) do
+    Ue_Dl_sync_server.sync_sss_add(state[:dl_sync_pid], msg, time_params)
+    {:reply, state, state}
+  end
 
   def handle_call({:pcfich, _msg, _time_params}, _from, state) do
     {:reply, state, state}
